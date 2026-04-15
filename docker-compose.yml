@@ -1,0 +1,84 @@
+version: '3.8'
+
+networks:
+  dmz_net:
+    name: red_dmz
+  internal_net:
+    name: red_interna
+
+services:
+  # --- BASE DE DATOS (Compartida por los dos Keycloaks) ---
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - internal_net
+
+  # --- KEYCLOAK INSTANCIA 1 ---
+  keycloak1:
+    image: quay.io/keycloak/keycloak:24.0.2
+    container_name: keycloak_node1
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_PROXY: edge
+    depends_on:
+      - db
+    networks:
+      - internal_net
+
+  # --- KEYCLOAK INSTANCIA 2 (Redundancia) ---
+  keycloak2:
+    image: quay.io/keycloak/keycloak:24.0.2
+    container_name: keycloak_node2
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_PROXY: edge
+    depends_on:
+      - db
+    networks:
+      - internal_net
+
+  # --- NGINX: BALANCEADOR Y PROXY (DMZ) ---
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_lb
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - dmz_net
+      - internal_net
+    depends_on:
+      - keycloak1
+      - keycloak2
+
+  # --- APP DE PRUEBA (Service Provider) ---
+  app:
+    build: ./app
+    container_name: python_app
+    networks:
+      - internal_net
+
+volumes:
+  postgres_data:
