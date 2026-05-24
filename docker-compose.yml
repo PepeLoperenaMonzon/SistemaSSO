@@ -82,6 +82,24 @@ services:
       - KEYCLOAK_SERVER=${KEYCLOAK_SERVER}
       - REALM_NAME=${REALM_NAME}
       - CLIENT_ID=${CLIENT_ID}
+      - REDIRECT_URI=${REDIRECT_URI}
+    extra_hosts:
+      - "sso.tfm.local:host-gateway"
+    networks:
+      - internal_net
+  
+  # --- APP DE PRUEBA 2 (Service Provider) ---
+  app2:
+    build: ./app2
+    container_name: python_app2
+    ports:
+      - "5001:5000"
+    environment:
+      - CLIENT_SECRET=${PYTHON_APP_SECRET_2}
+      - KEYCLOAK_SERVER=${KEYCLOAK_SERVER}
+      - REALM_NAME=${REALM_NAME}
+      - CLIENT_ID=${CLIENT_ID_2}
+      - REDIRECT_URI=${REDIRECT_URI_2}
     extra_hosts:
       - "sso.tfm.local:host-gateway"
     networks:
