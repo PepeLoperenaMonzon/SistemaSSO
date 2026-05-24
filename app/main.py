@@ -13,12 +13,14 @@ KEYCLOAK_SERVER = os.getenv('KEYCLOAK_SERVER')
 REALM_NAME = os.getenv('REALM_NAME')
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+REDIRECT_URI = os.getenv('REDIRECT_URI')
 
 config_vars = {
     'KEYCLOAK_SERVER': KEYCLOAK_SERVER,
     'REALM_NAME': REALM_NAME,
     'CLIENT_ID': CLIENT_ID,
     'CLIENT_SECRET': CLIENT_SECRET,
+    'REDIRECT_URI': REDIRECT_URI,
 }
 if not all(config_vars.values()):
     raise ValueError("Faltan variables de configuración")
@@ -49,7 +51,7 @@ def index():
 
 @app.route('/login')
 def login():
-    redirect_uri = "http://localhost:5000/callback"
+    redirect_uri = REDIRECT_URI
     auth_url = (
         f"{AUTHORIZATION_ENDPOINT}?client_id={CLIENT_ID}"
         f"&response_type=code"
@@ -64,7 +66,7 @@ def callback():
     if not code:
         return "Error: No se recibió el código", 400
 
-    redirect_uri = "http://localhost:5000/callback"
+    redirect_uri = REDIRECT_URI
     token_data = {
         'grant_type': 'authorization_code',
         'code': code,
