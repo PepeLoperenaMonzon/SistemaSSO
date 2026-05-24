@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso al Sistema</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; display: flex; align-items: center; justify-content: center; height: 80vh; }
+        .card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+        h2 { color: #2c3e50; margin-bottom: 20px; }
+        .btn-login { display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
+        .btn-login:hover { background-color: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Portal del Empleado</h2>
+        <p style="color: #666; margin-bottom: 30px;">Esta aplicación requiere autenticación centralizada mediante el Proveedor de Identidad.</p>
+        <a href="/login" class="btn-login">Iniciar Sesión con Keycloak</a>
+    </div>
+</body>
+</html>
