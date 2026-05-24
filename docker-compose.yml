@@ -79,6 +79,9 @@ services:
       - "5000:5000"
     environment:
       - CLIENT_SECRET=${PYTHON_APP_SECRET}
+      - KEYCLOAK_SERVER=${KEYCLOAK_SERVER}
+      - REALM_NAME=${REALM_NAME}
+      - CLIENT_ID=${CLIENT_ID}
     extra_hosts:
       - "sso.tfm.local:host-gateway"
     networks:

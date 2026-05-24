@@ -9,13 +9,19 @@ app.secret_key = os.urandom(24)
 # ==========================================
 # CONFIGURACIÓN DEL SSO
 # ==========================================
-KEYCLOAK_SERVER = "https://sso.tfm.local"
-REALM_NAME = "tfm_realm"
-CLIENT_ID = "app_python"
+KEYCLOAK_SERVER = os.getenv('KEYCLOAK_SERVER')
+REALM_NAME = os.getenv('REALM_NAME')
+CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 
-if not CLIENT_SECRET:
-    raise ValueError("La clave secreta para la aplicación Python no está definida")
+config_vars = {
+    'KEYCLOAK_SERVER': KEYCLOAK_SERVER,
+    'REALM_NAME': REALM_NAME,
+    'CLIENT_ID': CLIENT_ID,
+    'CLIENT_SECRET': CLIENT_SECRET,
+}
+if not all(config_vars.values()):
+    raise ValueError("Faltan variables de configuración")
 
 AUTHORIZATION_ENDPOINT = f"{KEYCLOAK_SERVER}/realms/{REALM_NAME}/protocol/openid-connect/auth"
 TOKEN_ENDPOINT = f"{KEYCLOAK_SERVER}/realms/{REALM_NAME}/protocol/openid-connect/token"
