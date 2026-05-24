@@ -78,6 +78,7 @@ services:
     ports:
       - "5000:5000"
     environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - CLIENT_SECRET=${PYTHON_APP_SECRET}
       - KEYCLOAK_SERVER=${KEYCLOAK_SERVER}
       - REALM_NAME=${REALM_NAME}
@@ -95,6 +96,7 @@ services:
     ports:
       - "5001:5000"
     environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - CLIENT_SECRET=${PYTHON_APP_SECRET_2}
       - KEYCLOAK_SERVER=${KEYCLOAK_SERVER}
       - REALM_NAME=${REALM_NAME}
