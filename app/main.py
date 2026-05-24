@@ -12,7 +12,7 @@ app.secret_key = os.urandom(24)
 KEYCLOAK_SERVER = "https://sso.tfm.local"
 REALM_NAME = "tfm_realm"
 CLIENT_ID = "app_python"
-CLIENT_SECRET = os.getenv('PYTHON_APP_SECRET')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 
 if not CLIENT_SECRET:
     raise ValueError("La clave secreta para la aplicación Python no está definida")
@@ -36,8 +36,8 @@ def index():
         <a href='/logout'><button>Cerrar Sesión</button></a>
         """
     return """
-    <h1>Aplicación de Prueba - Zero Trust</h1>
-    <p>No estás autenticado.</p>
+    <h1>Hola usuario!</h1>
+    <p>No estás autenticado, por favor inicia sesión para acceder a la aplicación.</p>
     <a href='/login'><button>Iniciar Sesión con Keycloak</button></a>
     """
 
