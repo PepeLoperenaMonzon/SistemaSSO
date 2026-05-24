@@ -57,8 +57,10 @@ def login():
 def callback():
     code = request.args.get('code')
     if not code:
-        return "Error: No se recibió el código", 400
+        print("[SSO] Error: Keycloak no ha devuelto ningún código.", flush=True)
+        return redirect('/')
 
+    # 1. Intercambio del Código por el Token
     token_data = {
         'grant_type': 'authorization_code',
         'code': code,
@@ -69,23 +71,47 @@ def callback():
     
     token_response = requests.post(TOKEN_ENDPOINT, data=token_data, verify=False)
     
-    if token_response.status_code == 200:
-        tokens = token_response.json()
-        session['access_token'] = tokens['access_token']
-        
-        userinfo_response = requests.get(USERINFO_ENDPOINT, 
-                                         headers={'Authorization': f"Bearer {session['access_token']}"}, 
-                                         verify=False)
-        if userinfo_response.status_code == 200:
-            user_data = userinfo_response.json()
-            session['user_email'] = user_data.get('email')
+    # --- Comprobamos si ha fallado antes de convertir a JSON ---
+    try:
+        token_json = token_response.json()
+    except requests.exceptions.JSONDecodeError:
+        print(f"[CRÍTICO] Fallo HTTP {token_response.status_code} en Token Endpoint", flush=True)
+        print(f"Respuesta del servidor: {token_response.text}", flush=True)
+        return f"Error interno en Token. Revisa la terminal de Docker.", 500
+
+    if 'access_token' not in token_json:
+        print(f"[SSO] Error al obtener Token: {token_json}", flush=True)
+        return redirect('/')
+
+    # 2. Petición de la información del usuario
+    headers = {
+        'Authorization': f"Bearer {token_json['access_token']}"
+    }
+    
+    userinfo_response = requests.get(USERINFO_ENDPOINT, headers=headers, verify=False)
+    
+    # --- Comprobamos el UserInfo ---
+    try:
+        userinfo_json = userinfo_response.json()
+    except requests.exceptions.JSONDecodeError:
+        print(f"[CRÍTICO] Fallo HTTP {userinfo_response.status_code} en UserInfo Endpoint", flush=True)
+        print(f"Respuesta del servidor: {userinfo_response.text}", flush=True)
+        return f"Error interno en UserInfo. Revisa la terminal de Docker.", 500
+    
+    if 'error' in userinfo_json:
+         print(f"[SSO] Error en UserInfo: {userinfo_json}", flush=True)
+         return redirect('/')
+
+    # Guardamos en sesión
+    print(f"[SSO] ¡Identidad confirmada! Datos: {userinfo_json}", flush=True)
+    session['userinfo'] = userinfo_json
 
     return redirect('/')
 
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(f"{LOGOUT_ENDPOINT}?client_id={CLIENT_ID}&post_logout_redirect_uri=http://localhost:5000/")
+    return redirect(f"{LOGOUT_ENDPOINT}?client_id={CLIENT_ID}&post_logout_redirect_uri=http://localhost:5001/")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
