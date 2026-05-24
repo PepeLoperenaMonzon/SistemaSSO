@@ -1,10 +1,12 @@
-from flask import Flask, redirect, request, session, url_for
+from flask import Flask, redirect, request, session, url_for, render_template
 import requests
 import os
 
 app = Flask(__name__)
 # Clave secreta para firmar las cookies de sesión de Flask
-app.secret_key = os.urandom(24)
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
+if not app.secret_key:
+    raise ValueError("Falta la clave secreta para Flask")
 
 # ==========================================
 # CONFIGURACIÓN DEL SSO
@@ -36,18 +38,9 @@ LOGOUT_ENDPOINT = f"{KEYCLOAK_SERVER}/realms/{REALM_NAME}/protocol/openid-connec
 
 @app.route('/')
 def index():
-    if 'access_token' in session:
-        return f"""
-        <h1>Segunda App (Inventario)</h1>.
-        <p>¡Hola! Has iniciado sesión correctamente mediante SSO.</p>
-        <p><b>Tu correo:</b> {session.get('user_email', 'Desconocido')}</p>
-        <a href='/logout'><button>Cerrar Sesión</button></a>
-        """
-    return """
-    <h1>Hola usuario!</h1>
-    <p>No estás autenticado, por favor inicia sesión para acceder a la aplicación.</p>
-    <a href='/login'><button>Iniciar Sesión con Keycloak</button></a>
-    """
+    if 'userinfo' in session:
+        return render_template('index.html', user_info=session['userinfo'])
+    return render_template('login.html')
 
 @app.route('/login')
 def login():
@@ -66,13 +59,12 @@ def callback():
     if not code:
         return "Error: No se recibió el código", 400
 
-    redirect_uri = REDIRECT_URI
     token_data = {
         'grant_type': 'authorization_code',
         'code': code,
+        'redirect_uri': REDIRECT_URI,
         'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
-        'redirect_uri': redirect_uri
+        'client_secret': CLIENT_SECRET
     }
     
     token_response = requests.post(TOKEN_ENDPOINT, data=token_data, verify=False)
@@ -88,9 +80,7 @@ def callback():
             user_data = userinfo_response.json()
             session['user_email'] = user_data.get('email')
 
-        return redirect(url_for('index'))
-    else:
-        return f"Error al obtener el token: {token_response.text}", 400
+    return redirect('/')
 
 @app.route('/logout')
 def logout():
