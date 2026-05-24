@@ -16,15 +16,15 @@
 </head>
 <body>
     <div class="container">
-        <h2>Área Segura del TFM (Aplicación 1)</h2>
-        <p>Bienvenido/a, <strong>{{ user_info.get('preferred_username', user_info.get('email', 'Usuario')) }}</strong>.</p>
+        <h2>Portal de inventario (Aplicacion 2)</h2>
+        <p>Bienvenido, <strong>{{ user_info.get('preferred_username', user_info.get('email', 'Usuario')) }}</strong>.</p>
         <p>Tu identidad ha sido verificada con éxito por el clúster de Keycloak bajo el estándar OpenID Connect.</p>
         
         <a href="/logout" class="logout-link">Cerrar Sesión Segura</a>
         
-        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e8f6f3;">
         
-        <button class="btn-debug" onclick="toggleJSON()">🔍 Ver Claims OIDC (JSON)</button>
+        <button class="btn-debug" onclick="toggleJSON()">Ver Claims OIDC (JSON)</button>
         
         <pre id="json-container"><code>{{ user_info | tojson(indent=4) }}</code></pre>
     </div>
