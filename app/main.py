@@ -57,7 +57,7 @@ def login():
 def callback():
     code = request.args.get('code')
     if not code:
-        print("❌ [SSO] Error: Keycloak no ha devuelto ningún código.", flush=True)
+        print("[SSO] Error: Keycloak no ha devuelto ningún código.", flush=True)
         return redirect('/')
 
     # 1. Intercambio del Código por el Token
@@ -75,12 +75,12 @@ def callback():
     try:
         token_json = token_response.json()
     except requests.exceptions.JSONDecodeError:
-        print(f"❌ [CRÍTICO] Fallo HTTP {token_response.status_code} en Token Endpoint", flush=True)
+        print(f"[CRÍTICO] Fallo HTTP {token_response.status_code} en Token Endpoint", flush=True)
         print(f"Respuesta del servidor: {token_response.text}", flush=True)
         return f"Error interno en Token. Revisa la terminal de Docker.", 500
 
     if 'access_token' not in token_json:
-        print(f"❌ [SSO] Error al obtener Token: {token_json}", flush=True)
+        print(f"[SSO] Error al obtener Token: {token_json}", flush=True)
         return redirect('/')
 
     # 2. Petición de la información del usuario
@@ -94,16 +94,16 @@ def callback():
     try:
         userinfo_json = userinfo_response.json()
     except requests.exceptions.JSONDecodeError:
-        print(f"❌ [CRÍTICO] Fallo HTTP {userinfo_response.status_code} en UserInfo Endpoint", flush=True)
+        print(f"[CRÍTICO] Fallo HTTP {userinfo_response.status_code} en UserInfo Endpoint", flush=True)
         print(f"Respuesta del servidor: {userinfo_response.text}", flush=True)
         return f"Error interno en UserInfo. Revisa la terminal de Docker.", 500
     
     if 'error' in userinfo_json:
-         print(f"❌ [SSO] Error en UserInfo: {userinfo_json}", flush=True)
+         print(f"[SSO] Error en UserInfo: {userinfo_json}", flush=True)
          return redirect('/')
 
     # ¡Éxito! Guardamos en sesión
-    print(f"✅ [SSO] ¡Identidad confirmada! Datos: {userinfo_json}", flush=True)
+    print(f"[SSO] ¡Identidad confirmada! Datos: {userinfo_json}", flush=True)
     session['userinfo'] = userinfo_json
 
     return redirect('/')
