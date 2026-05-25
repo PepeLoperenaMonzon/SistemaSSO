@@ -107,5 +107,24 @@ services:
     networks:
       - internal_net
 
+# --- APP DE PRUEBA 3 (Zona Alta Seguridad mTLS) ---
+  app3:
+    build: ./app3
+    container_name: python_app3
+    ports:
+      - "5002:5000"
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - CLIENT_SECRET=${PYTHON_APP_SECRET_3}
+      - KEYCLOAK_SERVER=${KEYCLOAK_SERVER_MTLS}
+      - REALM_NAME=${REALM_NAME}
+      - CLIENT_ID=${CLIENT_ID_3}
+      - REDIRECT_URI=${REDIRECT_URI_3}
+    extra_hosts:
+      - "sso.tfm.local:host-gateway"
+      - "mtls.sso.tfm.local:host-gateway"
+    networks:
+      - internal_net
+
 volumes:
   postgres_data:
