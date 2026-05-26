@@ -1,6 +1,7 @@
 from flask import Flask, redirect, request, session, render_template
 import requests
 import os
+from requests.exceptions import HTTPError, RequestException
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
@@ -51,11 +52,17 @@ def login():
     )
     return redirect(auth_url)
 
+import logging
+from requests.exceptions import HTTPError, RequestException
+
+# Asegúrate de tener configurado el logger en tu app de Flask
+# app.logger.setLevel(logging.INFO)
+
 @app.route('/callback')
 def callback():
     code = request.args.get('code')
     if not code:
-        print("[SSO App 3] Error: Código ausente.", flush=True)
+        app.logger.warning("[SSO App 3] Intento de acceso sin código de autorización.")
         return redirect('/')
 
     token_data = {
@@ -66,36 +73,41 @@ def callback():
         'client_secret': CLIENT_SECRET
     }
     
-    token_response = requests.post(TOKEN_ENDPOINT, data=token_data, verify=False)
-    
     try:
+        # 1. Intercambio de Código por Token (Back-Channel)
+        # Nota: verify=False se mantiene por el uso de CA local en laboratorio
+        token_response = requests.post(TOKEN_ENDPOINT, data=token_data, verify=False)
+        token_response.raise_for_status()  # Lanza una excepción si el HTTP status es 4xx o 5xx
+        
         token_json = token_response.json()
-    except Exception as e:
-        print(f"[CRÍTICO] Fallo HTTP en Token Endpoint", flush=True)
-        print(f"Código de estado: {token_response.status_code}", flush=True)
-        print(f"Respuesta de la red: {token_response.text}", flush=True)
-        return f"Error de red interno. Revisa la terminal de Docker: {token_response.text}", 500
+        if 'access_token' not in token_json:
+            app.logger.error(f"[SSO App 3] Intercambio fallido, JSON sin access_token: {token_json}")
+            return redirect('/')
 
-    if 'access_token' not in token_json:
-        print(f"[SSO App 3] Error en intercambio de token: {token_json}", flush=True)
+        # 2. Extracción del Perfil de Usuario (UserInfo)
+        headers = {'Authorization': f"Bearer {token_json['access_token']}"}
+        userinfo_response = requests.get(USERINFO_ENDPOINT, headers=headers, verify=False)
+        userinfo_response.raise_for_status()
+
+        # 3. Establecimiento de la Sesión
+        session['userinfo'] = userinfo_response.json()
+        app.logger.info(f"[SSO App 3] Autenticación mTLS exitosa para usuario: {session['userinfo'].get('preferred_username')}")
         return redirect('/')
 
-    headers = {'Authorization': f"Bearer {token_json['access_token']}"}
-    userinfo_response = requests.get(USERINFO_ENDPOINT, headers=headers, verify=False)
-    
-    if userinfo_response.status_code != 200:
-        html_error = f"""
-        <h1>¡Cazado! Error en UserInfo</h1>
-        <h3>Código de Estado HTTP: {userinfo_response.status_code}</h3>
-        <p><b>Lo que está devolviendo el servidor en lugar de un JSON es esto:</b></p>
-        <div style='background:#eee; padding:15px; border:1px solid #ccc;'>
-            {userinfo_response.text}
-        </div>
-        """
-        return html_error, 500\
-
-    session['userinfo'] = userinfo_response.json()
-    return redirect('/')
+    # Manejo estructurado de errores
+    except HTTPError as http_err:
+        app.logger.critical(f"[SSO Error Red] Fallo en la comunicación con Keycloak: {http_err}")
+        app.logger.critical(f"Detalle devuelto por el servidor: {http_err.response.text}")
+        # En producción, aquí se renderizaría un template (ej. render_template('error.html', code=500))
+        return "Error 500: Fallo de comunicación segura con el Proveedor de Identidad.", 500
+        
+    except ValueError as json_err:
+        app.logger.critical(f"[SSO Error Datos] La respuesta de Keycloak no es un JSON válido: {json_err}")
+        return "Error 500: Formato de respuesta no válido.", 500
+        
+    except RequestException as req_err:
+        app.logger.critical(f"[SSO Error Sistema] No se pudo alcanzar Keycloak: {req_err}")
+        return "Error 500: El servicio de autenticación no está disponible.", 500
 
 @app.route('/logout')
 def logout():
