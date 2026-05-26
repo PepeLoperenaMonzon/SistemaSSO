@@ -6,6 +6,8 @@ from requests.exceptions import HTTPError, RequestException
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 
+app.config['SESSION_COOKIE_NAME'] = 'app3_critical_session'
+
 if not app.secret_key:
     raise ValueError("Falta la clave secreta para Flask en App 3")
 
@@ -49,6 +51,7 @@ def login():
         f"&response_type=code"
         f"&scope=openid%20email%20profile"
         f"&redirect_uri={REDIRECT_URI}"
+        f"&prompt=login"
     )
     return redirect(auth_url)
 
