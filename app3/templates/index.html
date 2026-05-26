@@ -1,15 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Portal VIP - Acceso Concedido</title>
+    <meta charset="UTF-8">
+    <title>Área Ultra Segura (App 3)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #fcf3f3; color: #333; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(139, 0, 0, 0.15); max-width: 650px; margin: 0 auto; border-top: 5px solid #c0392b; }
+        h2 { color: #c0392b; border-bottom: 2px solid #e74c3c; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .badge { background-color: #c0392b; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; vertical-align: middle; }
+        .btn-debug { background-color: #2c3e50; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        .btn-debug:hover { background-color: #1a252f; }
+        #json-container { display: none; background-color: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; margin-top: 15px; overflow-x: auto; font-family: 'Courier New', Courier, monospace; font-size: 14px; }
+        .logout-link { color: #c0392b; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 15px; }
+        .logout-link:hover { text-decoration: underline; }
+    </style>
 </head>
-<body style='background-color: #fce4ec; font-family: sans-serif; text-align: center; padding-top: 50px;'>
-    <h1>ÁREA ULTRA SEGURA (App 3)</h1>
-    <p>Bienvenido <b>{{ user_info.name }}</b>, has accedido utilizando tu Certificado Digital X.509.</p>
-    <hr style='width: 50%; margin: 20px auto;'>
-    <h3>Datos extraídos de tu identidad:</h3>
-    <pre style='background: white; padding: 15px; display: inline-block; text-align: left; border-radius: 5px; border: 1px solid #ddd;'>{{ user_info }}</pre>
-    <br><br>
-    <a href='/logout' style='padding: 10px 20px; background: #e91e63; color: white; text-decoration: none; border-radius: 4px;'>Cerrar Sesión Global (SLO)</a>
+<body>
+    <div class="container">
+        <h2>
+            Portal Financiero y Transferencias 
+            <span class="badge">mTLS</span>
+        </h2>
+        <p>Bienvenido, <strong>{{ user_info.get('name', user_info.get('preferred_username', 'Usuario VIP')) }}</strong>.</p>
+        <p>Tu identidad ha sido verificada mediante <b>Certificado Digital X.509</b> (Step-Up Authentication) por el proxy perimetral y Keycloak.</p>
+        
+        <div style="background-color: #fdf2e9; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #e67e22;">
+            <p style="margin-top: 0; color: #d35400; font-weight: bold;">Navegación Corporativa</p>
+            <p style="font-size: 14px; color: #555; margin-bottom: 15px;">Puedes regresar a las áreas de nivel estándar sin necesidad de volver a introducir tus credenciales (SSO).</p>
+            <a href="http://localhost:5000" style="display: inline-block; padding: 8px 15px; background-color: #e67e22; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; transition: background 0.3s; margin-right: 10px;">
+                ⬅ App 1 (Recursos Humanos)
+            </a>
+            <a href="http://localhost:5001" style="display: inline-block; padding: 8px 15px; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; transition: background 0.3s;">
+                ⬅ App 2 (Inventario)
+            </a>
+        </div>
+        
+        <a href="/logout" class="logout-link">Cerrar Sesión Global (SLO)</a>
+        
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #fadbd8;">
+        
+        <button class="btn-debug" onclick="toggleJSON()">Ver Claims Criptográficas (JSON)</button>
+        
+        <pre id="json-container"><code>{{ user_info | tojson(indent=4) }}</code></pre>
+    </div>
+
+    <script>
+        function toggleJSON() {
+            var container = document.getElementById("json-container");
+            if (container.style.display === "none" || container.style.display === "") {
+                container.style.display = "block";
+            } else {
+                container.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
